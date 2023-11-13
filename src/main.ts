@@ -487,7 +487,7 @@ export default class SimpleThermostat extends LitElement {
   setTemperature(change: number, field: string) {
     this._updatingValues = true
     const previousValue = this._values[field]
-    const newValue = Number(previousValue) + change
+    const newValue = roundTemperature( Number(previousValue) + change )
     const { decimals } = this.config
 
     this._values = {
@@ -495,6 +495,13 @@ export default class SimpleThermostat extends LitElement {
       [field]: +formatNumber(newValue, { decimals }),
     }
     this._debouncedSetTemperature(this._values)
+  }
+
+  roundTemperature ( value: number) : number {
+    value = value * (10**config.decimals)
+    let mod_value = value % stepSize**config.decimals
+    value = value - mod_value
+    return value / 10**config.decimals
   }
 
   setMode = (type: string, mode: string) => {
