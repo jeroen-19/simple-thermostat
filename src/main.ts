@@ -6,6 +6,7 @@ import { name as CARD_NAME } from '../package.json'
 import isEqual from './isEqual'
 import styles from './styles.css'
 
+import { TempUtils } from './TempUtils'
 import formatNumber from './formatNumber'
 import fireEvent from './fireEvent'
 import renderHeader from './components/header'
@@ -132,6 +133,8 @@ export default class SimpleThermostat extends LitElement {
   @property()
   _hide = DEFAULT_HIDE
 
+  private tempUtils:TempUtils
+
   _debouncedSetTemperature = debounce(
     (values: object) => {
       const { domain, service, data = {} } = this.service
@@ -155,6 +158,11 @@ export default class SimpleThermostat extends LitElement {
       decimals: DECIMALS,
       ...config,
     }
+  }
+
+  protected firstUpdated() : void
+  {
+    this.tempUtils = new TempUtils(this.config.decimals,this.stepSize)
   }
 
   updated() {
@@ -487,7 +495,7 @@ export default class SimpleThermostat extends LitElement {
   setTemperature(change: number, field: string) {
     this._updatingValues = true
     const previousValue = this._values[field]
-    const newValue = this.roundTemperature( Number(previousValue) , change )
+    const newValue = this.tempUtils.roundTemperature( Number(previousValue) , change )
     const { decimals } = this.config
 
     this._values = {
@@ -497,18 +505,7 @@ export default class SimpleThermostat extends LitElement {
     this._debouncedSetTemperature(this._values)
   }
 
-  roundTemperature ( value: number, change: number ) : number {
-    value = (value + change) * (10**this.config.decimals)
-    let step = this.stepSize * (10**this.config.decimals)
-    let mod_value = value % step
-    if (change > 0) {
-	    value = value - mod_value
-    }
-    else {
-	    value = value + (step - mod_value) 
-    }    
-	return value / (10**this.config.decimals)
-  }
+
 
   setMode = (type: string, mode: string) => {
     if (type && mode) {
